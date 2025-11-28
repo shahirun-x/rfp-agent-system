@@ -1,0 +1,153 @@
+:root {
+  --bg-color: #0f172a;
+  --chat-bg: #1e293b;
+  --primary: #3b82f6;
+  --text: #f8fafc;
+  --text-secondary: #94a3b8;
+  --user-bubble: #2563eb;
+  --bot-bubble: #334155;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 1000px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Header */
+.header {
+  padding: 20px;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.9);
+}
+.header h1 { margin: 0; font-size: 1.2rem; }
+.badge {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: white;
+}
+
+/* Chat Area */
+.chat-window {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.message {
+  display: flex;
+  gap: 15px;
+  max-width: 80%;
+  animation: fadeIn 0.3s ease;
+}
+
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+.message.bot { align-self: flex-start; }
+
+.avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+}
+.message.bot .avatar { background: #10b981; } /* Green for bot */
+
+.bubble {
+  padding: 15px;
+  border-radius: 12px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  background: var(--bot-bubble);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.message.user .bubble { background: var(--user-bubble); color: white; }
+
+/* Category Tag in Bubble */
+.category-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.category-tag.LEGAL { background: #ef4444; color: white; } /* Red */
+.category-tag.TECHNICAL { background: #3b82f6; color: white; } /* Blue */
+
+/* Input Area */
+.input-area {
+  padding: 20px;
+  border-top: 1px solid #334155;
+  display: flex;
+  gap: 10px;
+  background: var(--chat-bg);
+}
+
+input {
+  flex: 1;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  background: #0f172a;
+  color: white;
+  outline: none;
+}
+input:focus { border-color: var(--primary); }
+
+button {
+  padding: 0 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+button:hover { opacity: 0.9; }
+button:disabled { background: #64748b; cursor: not-allowed; }
+
+/* Upload Modal */
+.upload-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.upload-box {
+  background: var(--chat-bg);
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  border: 2px dashed #475569;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
