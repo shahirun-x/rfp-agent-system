@@ -1,155 +1,56 @@
-RFP Intelligent Analyst Agent
-Project Overview
-The RFP Intelligent Analyst is an autonomous Multi-Agent System designed to streamline the analysis of Request for Proposal (RFP) documents. Unlike traditional chatbots, this system utilizes an agentic workflow to semantically route user queries to specialized sub-agents (Technical vs. Legal), ensuring domain-specific accuracy.
+# Intelligent RFP Analyst Agent
 
-The application leverages Retrieval-Augmented Generation (RAG) with vision-enabled document parsing to handle complex data structures like tables and charts. It features a full-stack architecture with a React frontend and a FastAPI backend, capable of automated report generation and human-in-the-loop (HITL) validation.
+## Project Overview
 
-Key Features
-Multi-Agent Orchestration: Implements a semantic router that classifies user intent and directs queries to either a "Technical Architect" agent or a "Legal/Compliance" agent.
+The Intelligent RFP Analyst Agent is an autonomous Multi-Agent System designed to streamline the analysis of Request for Proposals (RFPs) for Sales Engineering and Legal teams. Unlike standard chatbots, this system employs an Agentic Workflow that autonomously categorizes user intent, routes queries to specialized sub-agents (Technical vs. Legal), and generates structured executive briefs with citations.
 
-Vision-Enabled RAG: Utilizes LlamaParse to accurately parse unstructured PDFs, including tables and charts, converting them into structured Markdown for the LLM.
+The system leverages **Retrieval Augmented Generation (RAG)** using Cloud-Native Vector Databases (Pinecone) and advanced Computer Vision parsing (LlamaParse) to accurately interpret complex PDF tables and charts.
 
-Cloud-Native Memory: Stores vector embeddings in a serverless Pinecone database, ensuring persistence and scalability beyond local sessions.
+## Key Features
 
-Automated Content Generation: Includes a "Writer Agent" capable of drafting structured Executive Briefs and Risk Assessments automatically.
+- **Multi-Agent Orchestration**: Implements a Semantic Router that dynamically classifies queries. Technical questions are routed to a "Solutions Architect" persona, while risk/cost questions are routed to a "Legal Analyst" persona.
+- **Vision-Enabled RAG**: Utilizes LlamaParse to convert unstructured PDF data (including tables and charts) into markdown-structured data, enabling high-accuracy retrieval.
+- **Cloud-Native Memory**: Stores vector embeddings in Pinecone (Serverless), ensuring scalability and persistence across sessions.
+- **Contextual Memory**: Maintains conversation history to handle follow-up questions effectively.
+- **Source Citations**: Enhances trust by providing specific page references for every AI-generated answer.
+- **Automated "Writer" Agent**: Features an "Auto-Brief" mode that autonomously reads the document and drafts a comprehensive Executive Summary.
+- **Human-in-the-Loop Governance**: Includes a Manager Review workflow allowing users to reject, refine, and edit AI-generated drafts before finalization.
+- **Report Export**: Capabilities to export chat history and generated briefs into formatted Word documents (.docx).
 
-Human-in-the-Loop (HITL): Features a manager review workflow allowing users to reject, critique, and refine AI-generated drafts before finalization.
+## System Architecture
 
-Contextual Memory: Retains conversation history to handle follow-up questions and complex reasoning chains.
+The application follows a decoupled client-server architecture:
 
-Report Export: Functionality to compile chat history and generated briefs into a downloadable Microsoft Word (.docx) document.
+1.  **Frontend**: React (Vite) application handling the chat interface, file uploads, and state management.
+2.  **Backend**: FastAPI server handling orchestration, routing, and database connections.
+3.  **Database**: Pinecone (Vector Store) for storing document embeddings.
+4.  **AI Engine**: Groq (Llama-3.1-8b-instant) for high-speed inference and reasoning.
+5.  **Ingestion Engine**: LlamaParse for document processing and OCR.
 
-System Architecture
-The system follows a decoupled client-server architecture:
+## Tech Stack
 
-Frontend: A React application (Vite) provides the chat interface, file upload, and document review controls.
+- **Orchestration**: LangChain, LangGraph
+- **LLM Provider**: Groq
+- **Vector Database**: Pinecone
+- **Document Parsing**: LlamaParse (LlamaIndex)
+- **Backend Framework**: FastAPI (Python)
+- **Frontend Framework**: React, Vite, Tailwind CSS
+- **Utilities**: Python-docx, Pydantic, Axios
 
-Backend: A FastAPI server handles API requests, file processing, and agent orchestration.
+## Prerequisites
 
-Orchestration Layer: Logic determines whether to retrieve context, generate text, or refine output based on user feedback.
+- Python 3.10 or higher
+- Node.js (v18 or higher) and npm
+- Git
+- API Keys for:
+    - Groq Cloud
+    - Pinecone
+    - LlamaCloud
 
-Knowledge Base:
+## Installation and Setup
 
-Ingestion: Documents are processed via LlamaParse.
+### 1. Clone the Repository
 
-Storage: Embeddings are generated using HuggingFace models and stored in Pinecone.
-
-Inference: Groq (Llama-3) serves as the reasoning engine for all agents.
-
-Technology Stack
-Language: Python 3.10+, JavaScript (ES6+)
-
-Frontend Framework: React, Vite, Tailwind CSS (concepts), Axios
-
-Backend Framework: FastAPI, Uvicorn
-
-LLM & Inference: Groq API (Llama-3.1-8b-instant)
-
-Vector Database: Pinecone (Serverless)
-
-Document Parsing: LlamaParse (LlamaIndex)
-
-Orchestration: LangChain Core
-
-Utilities: Pydantic, Python-docx, Nest Asyncio
-
-Prerequisites
-Before running the project, ensure you have the following installed:
-
-Python 3.10 or higher
-
-Node.js (v16 or higher) and npm
-
-Git
-
-You will also need API keys for:
-
-Groq Cloud (LLM Inference)
-
-Pinecone (Vector Database)
-
-LlamaCloud (Document Parsing)
-
-Installation & Setup
-1. Clone the Repository
-Bash
-
-git clone https://github.com/your-username/rfp-agent-system.git
+```bash
+git clone [https://github.com/shahirun-x/rfp-agent-system.git](https://github.com/shahirun-x/rfp-agent-system.git)
 cd rfp-agent-system
-2. Backend Configuration
-Navigate to the root directory (where main.py is located).
-
-Install Python Dependencies:
-
-Bash
-
-pip install -r requirements.txt
-Configure Environment Variables: Create a file named .env in the root directory and add your credentials:
-
-Code snippet
-
-GROQ_API_KEY=your_groq_api_key
-PINECONE_API_KEY=your_pinecone_api_key
-LLAMA_CLOUD_API_KEY=your_llama_cloud_api_key
-Start the Server:
-
-Bash
-
-uvicorn main:app --reload
-The backend will start at http://127.0.0.1:8000.
-
-3. Frontend Configuration
-Open a new terminal and navigate to the frontend directory.
-
-Navigate to Frontend:
-
-Bash
-
-cd frontend
-Install Node Dependencies:
-
-Bash
-
-npm install
-Update API URL (If deploying): If running locally, the default configuration works. If deploying, update API_URL in src/App.jsx.
-
-Start the Application:
-
-Bash
-
-npm run dev
-The frontend will start at http://localhost:5173.
-
-Usage Guide
-Ingestion: Open the application and upload a PDF document (e.g., an RFP or Technical Paper). Wait for the "Processed" confirmation.
-
-Q&A: Type questions in the chat bar.
-
-Ask about code or architecture to trigger the Technical Agent.
-
-Ask about risks, costs, or compliance to trigger the Legal Agent.
-
-Source Verification: Check the citations (Page Numbers) provided below each response.
-
-Auto-Brief: Click the "Auto-Brief" button to generate an executive summary.
-
-Review: If using the Auto-Brief, use the "Approve" or "Reject & Edit" buttons to refine the content.
-
-Export: Click the "Export" button to download the entire session as a Word document.
-
-Project Structure
-
-
-rfp-agent-system/
-├── frontend/                # React Frontend
-│   ├── src/
-│   │   ├── App.jsx          # Main UI Logic
-│   │   ├── App.css          # Styling
-│   │   └── main.jsx         # Entry point
-│   ├── package.json
-│   └── vite.config.js
-├── main.py                  # FastAPI Backend & Agent Logic
-├── requirements.txt         # Python Dependencies
-├── .env                     # API Secrets (Not committed)
-├── .gitignore               # Git Ignore Rules
-└── README.md                # Documentation
