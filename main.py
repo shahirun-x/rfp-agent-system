@@ -10,7 +10,7 @@ from docx import Document as DocxDocument # Renamed to avoid conflict
 
 # --- AI & DB Imports ---
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -39,7 +39,7 @@ PINECONE_INDEX_NAME = "rfp-agent"
 
 # --- HELPER: Connect to Cloud DB ---
 def get_vectorstore():
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = FastEmbedEmbeddings()
     return PineconeVectorStore.from_existing_index(PINECONE_INDEX_NAME, embeddings)
 
 # --- MODELS ---
@@ -100,7 +100,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         
         # Upload to Pinecone
         print("🌲 Uploading to Pinecone...")
-        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        embeddings = FastEmbedEmbeddings()
         
         PineconeVectorStore.from_documents(
             documents=splits, 
