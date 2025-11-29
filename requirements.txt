@@ -14,3 +14,4 @@ pinecone
 nest_asyncio
 python-docx
 python-multipart
+sentence-transformers
