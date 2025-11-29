@@ -7,10 +7,9 @@ tiktoken
 fastapi
 uvicorn
 python-dotenv
-langchain-huggingface
-faiss-cpu
 llama-parse
 langchain-pinecone
 pinecone
 nest_asyncio
 python-docx
+python-multipart
