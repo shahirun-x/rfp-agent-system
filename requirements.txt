@@ -10,7 +10,7 @@ python-dotenv
 langchain-huggingface
 faiss-cpu
 llama-parse
-langchain-pinecone
+pinecone
 pinecone-client
 nest_asyncio
 python-docx
