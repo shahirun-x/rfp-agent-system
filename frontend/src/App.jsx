@@ -5,7 +5,7 @@ import axios from 'axios'
 import './App.css'
 
 // IMPORTANT: Configuring the connection to your Python Backend
-const API_URL = "https://effective-disco-wrjgrrq75gpg25ggq-8000.app.github.dev"
+const API_URL = "https://rfp-agent-system.onrender.com"
 
 function App() {
   const [messages, setMessages] = useState([
