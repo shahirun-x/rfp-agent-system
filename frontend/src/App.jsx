@@ -58,9 +58,19 @@ function App() {
     setIsLoading(true)
 
     try {
+     // Prepare History: Convert our React state to the format Python expects
+      // We filter out "thinking" messages and only send text
+      const historyPayload = messages
+        .filter(msg => msg.role !== 'system') // Remove system messages if any
+        .map(msg => ({
+          role: msg.role === 'bot' ? 'assistant' : 'user',
+          content: msg.text
+        }))
+
       // Call Python API
       const response = await axios.post(`${API_URL}/chat`, {
-        question: userMessage
+        question: userMessage,
+        history: historyPayload
       })
 
       // Add Bot Response to UI
@@ -68,7 +78,8 @@ function App() {
       setMessages(prev => [...prev, { 
         role: 'bot', 
         text: data.answer, 
-        category: data.category // 'LEGAL' or 'TECHNICAL'
+        category: data.category, // 'LEGAL' or 'TECHNICAL'
+        sources: data.sources // <--- Capture the sources array
       }])
 
     } catch (error) {
@@ -128,6 +139,13 @@ function App() {
                 </div>
               )}
               {msg.text}
+              
+              {/* NEW: Render Sources if they exist */}
+              {msg.sources && msg.sources.length > 0 && (
+                <div style={{marginTop: '10px', fontSize: '0.8rem', color: '#cbd5e1', borderTop: '1px solid #475569', paddingTop: '5px'}}>
+                  <strong>Sources:</strong> {msg.sources.join(', ')}
+                </div>
+              )}
             </div>
           </div>
         ))}

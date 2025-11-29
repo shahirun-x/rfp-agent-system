@@ -1,3 +1,4 @@
+from typing import List, Optional # Add this import at the top
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,6 +13,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -34,6 +36,7 @@ vector_store = None
 # --- 2. Data Models (The Shape of Requests) ---
 class ChatRequest(BaseModel):
     question: str
+    history: List[dict] = [] # New: Holds previous Q&A
 
 # --- 3. The API Endpoints ---
 
@@ -81,27 +84,49 @@ async def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Please upload a PDF first.")
     
     question = request.question
+    history = request.history # Get the list of previous chats
     
-    # --- ROUTER LOGIC ---
+    # --- 1. FORMAT HISTORY (The Memory) ---
+    # We turn the list of dicts into a string text block
+    chat_history_text = ""
+    for msg in history[-4:]: # Only keep last 4 messages to save tokens
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        chat_history_text += f"{role.upper()}: {content}\n"
+
+    # --- 2. ROUTER LOGIC ---
     llm_router = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
     
+    # Router needs to see history too! (e.g. "Tell me more about IT" -> IT refers to previous topic)
     router_prompt = f"""
-    Classify the user's question into 'TECHNICAL' or 'LEGAL'.
+    Classify the user's intent.
+    Chat History:
+    {chat_history_text}
+    
+    Current Question: {question}
+    
     If it mentions cost/risk/business -> LEGAL.
     If it mentions code/architecture -> TECHNICAL.
-    Question: {question}
     Return ONLY the category word.
     """
     category = llm_router.invoke(router_prompt).content.strip().upper()
     if "LEGAL" in category: category = "LEGAL"
     else: category = "TECHNICAL"
     
-    # --- RAG LOGIC ---
+    # --- 3. RAG LOGIC ---
     retriever = vector_store.as_retriever()
+    # We retrieve documents based on the question
     docs = retriever.invoke(question)
+    
+    sources = set()
+    for doc in docs:
+        page_num = doc.metadata.get("page", 0) + 1
+        sources.add(f"Page {page_num}")
+    sources_list = sorted(list(sources))
+    
     context = "\n".join([d.page_content for d in docs])
     
-    # --- GENERATION LOGIC ---
+    # --- 4. GENERATION LOGIC (With Memory) ---
     if category == "TECHNICAL":
         system = "You are a Technical Architect. Answer with technical depth."
     else:
@@ -109,8 +134,15 @@ async def chat_endpoint(request: ChatRequest):
         
     final_prompt = f"""
     {system}
-    Context: {context}
-    Question: {question}
+    
+    Relevant Context from PDF:
+    {context}
+    
+    Conversation History:
+    {chat_history_text}
+    
+    User's New Question: {question}
+    
     Answer:
     """
     
@@ -118,7 +150,7 @@ async def chat_endpoint(request: ChatRequest):
     
     return {
         "category": category,
-        "answer": response.content
+        "answer": response.content,
+        "sources": sources_list
     }
-
 # To run: uvicorn main:app --reload
