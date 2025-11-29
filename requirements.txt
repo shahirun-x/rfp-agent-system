@@ -9,3 +9,8 @@ uvicorn
 python-dotenv
 langchain-huggingface
 faiss-cpu
+llama-parse
+langchain-pinecone
+pinecone-client
+nest_asyncio
+python-docx

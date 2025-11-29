@@ -1,6 +1,7 @@
+import ReactMarkdown from 'react-markdown'
+import { Send, Upload, Bot, User, FileText, Download, Sparkles } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
-import { Send, Upload, Bot, User, FileText } from 'lucide-react'
 import './App.css'
 
 // IMPORTANT: Configuring the connection to your Python Backend
@@ -14,6 +15,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [isFileUploaded, setIsFileUploaded] = useState(false)
   const messagesEndRef = useRef(null)
+  const [pendingApproval, setPendingApproval] = useState(null) // Stores the draft waiting for approval
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -37,7 +39,7 @@ function App() {
       setIsFileUploaded(true)
       setMessages(prev => [...prev, { 
         role: 'bot', 
-        text: `✅ Processed ${file.name}. I am ready! Ask me about Risks (Legal) or Architecture (Technical).` 
+        text: ` Processed ${file.name}. I am ready! Ask me about Risks (Legal) or Architecture (Technical).` 
       }])
     } catch (error) {
       alert("Error uploading file: " + error.message)
@@ -83,18 +85,128 @@ function App() {
       }])
 
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'bot', text: "⚠️ Error: " + error.message }])
+      setMessages(prev => [...prev, { role: 'bot', text: " Error: " + error.message }])
     } finally {
       setIsLoading(false)
     }
   }
+  // 3. Handle Download
+  const handleDownload = async () => {
+    if (messages.length < 2) {
+      alert("Chat is empty. Nothing to download.")
+      return
+    }
 
+    try {
+      // Prepare history payload
+      const historyPayload = messages
+        .filter(msg => msg.role !== 'system')
+        .map(msg => ({
+          role: msg.role === 'bot' ? 'AI Agent' : 'User',
+          content: msg.text
+        }))
+
+      // Request file from backend
+      const response = await axios.post(`${API_URL}/download-report`, {
+        history: historyPayload
+      }, {
+        responseType: 'blob' // Important: tells Axios this is a file, not JSON
+      })
+
+      // Create a link to download the file in browser
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'RFP_Analysis.docx')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+    } catch (error) {
+      alert("Error downloading report: " + error.message)
+    }
+  }
+  // 4. Handle Auto-Generate Brief
+  const handleGenerateBrief = async () => {
+    if (!isFileUploaded) return
+    setIsLoading(true)
+    setMessages(prev => [...prev, { role: 'bot', text: ' Drafting Executive Brief...', category: 'WRITER' }])
+
+    try {
+      const response = await axios.post(`${API_URL}/generate-brief`)
+      const draft = response.data.answer
+      
+      // Remove placeholder
+      setMessages(prev => {
+        const newMsgs = [...prev]
+        newMsgs.pop()
+        return [...newMsgs, { role: 'bot', text: draft, category: 'WRITER' }]
+      })
+      
+      // TRIGGER APPROVAL MODE
+      setPendingApproval(draft) 
+      
+    } catch (error) {
+      alert("Error: " + error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  const handleRefine = async (feedback) => {
+    setPendingApproval(null) // Hide buttons
+    setMessages(prev => [...prev, { role: 'user', text: `Feedback: ${feedback}` }])
+    setIsLoading(true)
+    
+    try {
+      const response = await axios.post(`${API_URL}/refine-brief`, {
+        original_text: pendingApproval, // Send the draft
+        feedback: feedback
+      })
+      
+      const newDraft = response.data.answer
+      setMessages(prev => [...prev, { role: 'bot', text: newDraft, category: 'WRITER' }])
+      setPendingApproval(newDraft) // Ask for approval again! (Loop)
+      
+    } catch (error) {
+      alert("Error refining: " + error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
   return (
     <div className="container">
       {/* Header */}
       <div className="header">
         <Bot size={24} className="text-blue-500" />
         <h1>RFP Intelligent Analyst</h1>
+        {/* NEW: Download Button */}
+        {messages.length > 1 && (
+          <button 
+            onClick={handleDownload}
+            style={{background: '#475569', padding: '8px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '5px'}}
+          >
+            <Download size={16} /> Export
+          </button>
+        )}
+        {/* NEW: Generate Brief Button */}
+        {isFileUploaded && (
+          <button 
+            onClick={handleGenerateBrief}
+            disabled={isLoading}
+            style={{
+              background: 'linear-gradient(45deg, #8b5cf6, #ec4899)', // Cool gradient
+              padding: '8px 12px', 
+              fontSize: '0.8rem', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '5px',
+              border: 'none',
+              marginRight: '10px'
+            }}
+          >
+            <Sparkles size={16} /> Auto-Brief
+          </button>
+        )}
         <span className="badge">v1.0</span>
       </div>
 
@@ -138,7 +250,7 @@ function App() {
                   {msg.category} AGENT
                 </div>
               )}
-              {msg.text}
+              {<ReactMarkdown>{msg.text}</ReactMarkdown>}
               
               {/* NEW: Render Sources if they exist */}
               {msg.sources && msg.sources.length > 0 && (
@@ -157,6 +269,34 @@ function App() {
         )}
         <div ref={messagesEndRef} />
       </div>
+      {/* HUMAN IN THE LOOP CONTROLS */}
+      {pendingApproval && (
+        <div style={{
+          padding: '15px', background: '#334155', borderTop: '1px solid #475569', 
+          display: 'flex', flexDirection: 'column', gap: '10px'
+        }}>
+          <div style={{color: '#cbd5e1', fontSize: '0.9rem'}}>
+             <strong>Manager Review:</strong> Do you approve this draft?
+          </div>
+          <div style={{display: 'flex', gap: '10px'}}>
+            <button 
+              onClick={() => { setPendingApproval(null); alert("Draft Approved & Saved!") }}
+              style={{background: '#10b981', flex: 1}}
+            >
+               Approve
+            </button>
+            <button 
+              onClick={() => {
+                const feedback = prompt("What should be changed?");
+                if(feedback) handleRefine(feedback);
+              }}
+              style={{background: '#ef4444', flex: 1}}
+            >
+               Reject & Edit
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Input Area */}
       <div className="input-area">
