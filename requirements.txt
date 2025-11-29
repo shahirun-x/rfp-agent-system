@@ -2,7 +2,7 @@ langchain
 langgraph
 langchain-groq
 langchain-community
-langchain-huggingface  <-- ADD THIS
+langchain-huggingface
 pypdf
 tiktoken
 fastapi
